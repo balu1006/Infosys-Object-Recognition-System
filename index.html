@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title> Detection </title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        button {
+            margin: 10px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        #results {
+            margin-top: 20px;
+            width: 100%;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        #webcamFeed {
+            margin-top: 20px;
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        #detectedImage {
+            max-width: 100%;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>PPE Detection System</h1>
+
+    <!-- Image Upload Button -->
+    <input type="file" id="imageInput" accept="image/*" />
+    <button id="detectImage">Detect from Image</button>
+
+    <!-- Video Upload Button -->
+    <input type="file" id="videoInput" accept="video/*">
+    <button id="detectVideo">Detect from Video</button>
+
+    <!-- Webcam Detection Button -->
+    <button id="webcamButton">Start Webcam Detection</button>
+
+    <!-- Webcam Feed Display -->
+    <img id="webcamFeed" src="" alt="Webcam Feed" />
+
+    <!-- Display Detected Image -->
+    <img id="detectedImage" src="" alt="Detected Image" style="display:none;"/>
+
+    <div id="results">
+        <h2>Results:</h2>
+        <table id="resultTable">
+            <thead>
+                <tr>
+                    <th>Class</th>
+                    <th>Confidence</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        const resultTable = document.getElementById("resultTable").getElementsByTagName('tbody')[0];
+        const webcamButton = document.getElementById("webcamButton");
+        const detectedImage = document.getElementById("detectedImage");
+        let isWebcamActive = false; // Track the state of the webcam
+        let detectionInterval; // Variable to hold the interval ID
+    
+        // Detect from Image
+        document.getElementById("detectImage").addEventListener("click", async () => {
+            const imageInput = document.getElementById("imageInput").files[0];
+            if (!imageInput) return alert("Please select an image file!");
+    
+            const formData = new FormData();
+            formData.append("image_file", imageInput); 
+    
+            const response = await fetch("/detect_image", {
+                method: "POST",
+                body: formData,
+            });
+    
+            const data = await response.json();
+            if (response.ok) {
+                detectedImage.style.display = 'block';
+                detectedImage.src = `data:image/jpeg;base64,${data.image}`;
+
+                // Add an empty row before adding results
+                const emptyRow = resultTable.insertRow();
+                emptyRow.innerHTML = "<td colspan='2'>&nbsp;</td>"; // Empty row
+
+                // Add detected classes and confidence levels
+                data.boxes.forEach(box => {
+                    const row = resultTable.insertRow();
+                    const classCell = row.insertCell(0);
+                    const confCell = row.insertCell(1);
+                    classCell.textContent = box[4]; // Class name
+                    confCell.textContent = box[5]; // Confidence
+                });
+            } else {
+                alert(data.error || "An error occurred during detection.");
+            }
+        });
+    
+        // Detect from Video
+        document.getElementById("detectVideo").addEventListener("click", async () => {
+            const videoInput = document.getElementById("videoInput").files[0];
+            if (!videoInput) return alert("Please select a video file!");
+
+            const formData = new FormData();
+            formData.append("video_file", videoInput); // Sending the selected video file
+
+            const response = await fetch("/detect_video", {
+                method: "POST",
+                body: formData,
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                // Process results from the video detection
+                const emptyRow = resultTable.insertRow();
+                emptyRow.innerHTML = "<td colspan='2'>&nbsp;</td>"; // Empty row
+
+                data.frames.forEach(frame => {
+                    const row = resultTable.insertRow();
+                    const classCell = row.insertCell(0);
+                    const confCell = row.insertCell(1);
+                    classCell.textContent = frame.class; // Assuming the class is part of the frame data
+                    confCell.textContent = frame.confidence; // Assuming the confidence is part of the frame data
+                });
+            } else {
+                alert(data.error || "An error occurred during detection.");
+            }
+        });
+
+        // Start Webcam Detection
+        webcamButton.addEventListener("click", () => {
+            if (isWebcamActive) {
+                clearInterval(detectionInterval);
+                webcamButton.textContent = "Start Webcam Detection";
+                isWebcamActive = false;
+                document.getElementById("webcamFeed").src = ""; // Stop showing webcam feed
+                return;
+            }
+
+            // Start fetching webcam feed
+            webcamButton.textContent = "Stop Webcam Detection";
+            isWebcamActive = true;
+            document.getElementById("webcamFeed").src = "/detect_webcam";
+
+            // Set interval to fetch results
+            detectionInterval = setInterval(async () => {
+                const response = await fetch("/detect_webcam_results");
+                const data = await response.json();
+                if (response.ok) {
+                    // Add an empty row for each new detection
+                    const emptyRow = resultTable.insertRow();
+                    emptyRow.innerHTML = "<td colspan='2'>&nbsp;</td>"; 
+
+                    data.boxes.forEach(box => {
+                        const row = resultTable.insertRow();
+                        const classCell = row.insertCell(0);
+                        const confCell = row.insertCell(1);
+                        classCell.textContent = box[4]; // Class name
+                        confCell.textContent = box[5]; // Confidence
+                    });
+                } else {
+                    alert(data.error || "An error occurred while fetching webcam results.");
+                }
+            }, 1000); // Fetch results every second
+        });
+    </script>
+</body>
+</html>

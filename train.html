@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training </title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Training Page</h2>
+        
+        <!-- Image Upload Section -->
+        <div class="form-group">
+            <label for="imageInput">Upload Images (multiple)</label>
+            <input type="file" id="imageInput" class="form-control" multiple>
+        </div>
+        
+        <!-- Annotation Button -->
+        <button id="annotateButton" class="btn btn-primary">Annotate Images</button>
+        <div id="annotationStatus" class="mt-2"></div>
+        
+        <!-- Training Button -->
+        <button id="trainButton" class="btn btn-success mt-3">Train Model</button>
+        <div id="trainingStatus" class="mt-2"></div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#annotateButton').on('click', function() {
+                const files = $('#imageInput')[0].files;
+                if (files.length === 0) {
+                    alert('Please upload some images first.');
+                    return;
+                }
+
+                // Show that annotation is pending
+                $('#annotationStatus').text('Annotation pending...');
+
+                // Create FormData object to send files
+                const formData = new FormData();
+                for (let i = 0; i < files.length; i++) {
+                    formData.append('images', files[i]);
+                }
+
+                // Send AJAX request to annotate images
+                $.ajax({
+                    url: '/annotate_images',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        $('#annotationStatus').text('Annotation completed.');
+                    },
+                    error: function(xhr) {
+                        $('#annotationStatus').text('Annotation failed: ' + xhr.responseJSON.error);
+                    }
+                });
+            });
+
+            $('#trainButton').on('click', function() {
+                $('#trainingStatus').text('Training started...');
+
+                // Send AJAX request to train model
+                $.ajax({
+                    url: '/train_model',
+                    type: 'POST',
+                    success: function(response) {
+                        $('#trainingStatus').text('Training completed successfully!');
+                    },
+                    error: function(xhr) {
+                        $('#trainingStatus').text('Training failed: ' + xhr.responseJSON.error);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

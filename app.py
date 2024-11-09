@@ -13,7 +13,7 @@ import os
 app = Flask(__name__)
 
 # Initialize the model
-model = YOLO("best - Copy.pt") 
+model = YOLO("yolov8n.pt") 
 
 # Directory to save annotated images temporarily
 ANNOTATED_DIR = 'annotated_images'

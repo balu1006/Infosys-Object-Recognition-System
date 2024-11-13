@@ -10,10 +10,21 @@ import base64
 import tempfile
 import os
 
+from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask_pymongo import PyMongo
+from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import timedelta
+import re
+from time import time
+
 app = Flask(__name__)
 
+app.secret_key = 'Object-recognition-System' 
+app.config["MONGO_URI"] = "mongodb://localhost:27017/ORS"
+mongo = PyMongo(app)
+
 # Initialize the model
-model = YOLO("yolov8n.pt") 
+model = YOLO("best - Copy.pt") 
 
 # Directory to save annotated images temporarily
 ANNOTATED_DIR = 'annotated_images'
@@ -25,8 +36,105 @@ TRAINING_DATASET_DIR = 'training_dataset'
 if not os.path.exists(TRAINING_DATASET_DIR):
     os.makedirs(TRAINING_DATASET_DIR)
 
-@app.route("/")
+# @app.route("/")
+# def root():
+#     try:
+#         with open("first.html") as file:
+#             return file.read()
+#     except FileNotFoundError:
+#         return Response(
+#             json.dumps({"error": "first.html not found"}), 
+#             mimetype='application/json'
+#         ), 404
+
+
+# Route for Landing page (home page with options)
+@app.route('/')
 def root():
+    try:
+        with open("landing.html") as file:
+            return file.read()
+    except FileNotFoundError:
+        return Response(
+            json.dumps({"error": "landing.html not found"}), 
+            mimetype='application/json'
+        ), 404
+        
+@app.route("/about")
+def about():
+    try:
+        with open("AboutUS.html") as file:
+            return file.read()
+    except FileNotFoundError:
+        return Response(
+            json.dumps({"error": "AboutUs.html not found"}), 
+            mimetype='application/json'
+        ), 404
+        
+@app.route("/contact")
+def contact():
+    try:
+        with open("Contact.html") as file:
+            return file.read()
+    except FileNotFoundError:
+        return Response(
+            json.dumps({"error": "Contact.html not found"}), 
+            mimetype='application/json'
+        ), 404
+
+# Route for Sign Up page
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'POST':
+        username = request.form['username']
+        email = request.form['email']
+        password = request.form['password']
+        confirm_password = request.form['confirm_password']
+
+        # Check if passwords match
+        if password != confirm_password:
+            flash('Passwords do not match!', 'danger')
+            return redirect(url_for('signup'))
+
+        # Check if the username or email already exists in MongoDB
+        existing_user = mongo.db.users.find_one({'$or': [{'username': username}, {'email': email}]})
+        if existing_user:
+            flash('Username or Email already exists!', 'danger')
+            return redirect(url_for('signup'))
+
+        # Hash the password before saving
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+
+        # Create a new user document and insert it into the MongoDB 'users' collection
+        new_user = {'username': username, 'email': email, 'password': hashed_password}
+        mongo.db.users.insert_one(new_user)
+
+        flash('Account created successfully!', 'success')
+        return redirect(url_for('login'))
+
+    return render_template('signup.html')
+
+
+# Route for Login page
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        # Check if the user exists in MongoDB
+        user = mongo.db.users.find_one({'username': username})
+        if user and check_password_hash(user['password'], password):
+            session['username'] = username  # Store the username in the session
+            flash('Login successful!', 'success')
+            return redirect(url_for('first'))  # Redirect to the first.html page after login
+        else:
+            flash('Invalid username or password!', 'danger')
+
+    return render_template('login.html')
+
+@app.route('/first')
+def first():
     try:
         with open("first.html") as file:
             return file.read()
@@ -102,7 +210,7 @@ def annotate_images():
 def train_model():
     try:
         # Start the training process using the annotated images
-        model.train(data=prepare_training_data(), epochs=50)  # Adjust epochs as needed
+        model.train(data=prepare_training_data(), epochs=5)  # Adjust epochs as needed
 
         return jsonify({"message": "Training completed successfully!"}), 200
     except Exception as e:
@@ -151,22 +259,114 @@ def detect_objects_on_image(image):
 
 def get_class_id(class_name):
     class_mapping = {
-        "person": 0,
-        "vest": 1,
-        "no-vest": 2,
-        "helmet": 3,
-        "mask": 4
+        "1": 0,
+        "2": 1,
+        "3": 2,
+        "4": 3,
+        "5": 4,
+        "6": 5,
+        "7": 6,
+        "Glass": 7,
+        "Glasses": 8,
+        "Gloves": 9,
+        "Goggles": 10,
+        "Helmet": 11,
+        "Mask": 12,
+        "No-Helmet": 13,
+        "No-Vest": 14,
+        "Person": 15,
+        "Safety-Boot": 16,
+        "Safety-Vest": 17,
+        "Safety_shoes": 18,
+        "Shoes": 19,
+        "Vest": 20,
+        "blue": 21,
+        "combination": 22,
+        "face_mask": 23,
+        "face_nomask": 24,
+        "glass": 25,
+        "glasses": 26,
+        "glove": 27,
+        "hand_glove": 28,
+        "hand_noglove": 29,
+        "head": 30,
+        "head_helmet": 31,
+        "head_nohelmet": 32,
+        "helmet": 33,
+        "no helmet": 34,
+        "no vest": 35,
+        "no-vest": 36,
+        "no_helmet": 37,
+        "no_vest": 38,
+        "person": 39,
+        "protective_suit": 40,
+        "red": 41,
+        "safety boot": 42,
+        "shoes": 43,
+        "vest": 44,
+        "white": 45,
+        "worker": 46,
+        "yellow": 47
     }
-    return class_mapping.get(class_name, 99)
+
+    if class_name in class_mapping:
+        return class_mapping[class_name]
+    else:
+        print(f"Warning: '{class_name}' is not a recognized class name.")
+        return None  
 
 def prepare_training_data():
     class_mapping = {
-        "person": 0,
-        "vest": 1,
-        "no-vest": 2,
-        "helmet": 3,
-        "mask": 4
+        "1": 0,
+        "2": 1,
+        "3": 2,
+        "4": 3,
+        "5": 4,
+        "6": 5,
+        "7": 6,
+        "Glass": 7,
+        "Glasses": 8,
+        "Gloves": 9,
+        "Goggles": 10,
+        "Helmet": 11,
+        "Mask": 12,
+        "No-Helmet": 13,
+        "No-Vest": 14,
+        "Person": 15,
+        "Safety-Boot": 16,
+        "Safety-Vest": 17,
+        "Safety_shoes": 18,
+        "Shoes": 19,
+        "Vest": 20,
+        "blue": 21,
+        "combination": 22,
+        "face_mask": 23,
+        "face_nomask": 24,
+        "glass": 25,
+        "glasses": 26,
+        "glove": 27,
+        "hand_glove": 28,
+        "hand_noglove": 29,
+        "head": 30,
+        "head_helmet": 31,
+        "head_nohelmet": 32,
+        "helmet": 33,
+        "no helmet": 34,
+        "no vest": 35,
+        "no-vest": 36,
+        "no_helmet": 37,
+        "no_vest": 38,
+        "person": 39,
+        "protective_suit": 40,
+        "red": 41,
+        "safety boot": 42,
+        "shoes": 43,
+        "vest": 44,
+        "white": 45,
+        "worker": 46,
+        "yellow": 47
     }
+
     
     class_names = list(class_mapping.keys())  
     yaml_content = f"""

@@ -10,7 +10,7 @@ import base64
 import tempfile
 import os
 
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session,send_from_directory
 from flask_pymongo import PyMongo
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import timedelta
@@ -24,7 +24,7 @@ app.config["MONGO_URI"] = "mongodb://localhost:27017/ORS"
 mongo = PyMongo(app)
 
 # Initialize the model
-model = YOLO("best - Copy.pt") 
+model = YOLO("best (1).pt") 
 
 # Directory to save annotated images temporarily
 ANNOTATED_DIR = 'annotated_images'
@@ -132,6 +132,24 @@ def login():
             flash('Invalid username or password!', 'danger')
 
     return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    # Clear the session to log the user out
+    session.pop('username', None)
+    flash('You have been logged out!', 'success')
+    return redirect(url_for('login')) 
+
+@app.route('/contact')
+def contact2():
+    try:
+        with open("Contact.html") as file:
+            return file.read()
+    except FileNotFoundError:
+        return Response(
+            json.dumps({"error": "first.html not found"}), 
+            mimetype='application/json'
+        ), 404
 
 @app.route('/first')
 def first():
@@ -259,55 +277,18 @@ def detect_objects_on_image(image):
 
 def get_class_id(class_name):
     class_mapping = {
-        "1": 0,
-        "2": 1,
-        "3": 2,
-        "4": 3,
-        "5": 4,
-        "6": 5,
-        "7": 6,
-        "Glass": 7,
-        "Glasses": 8,
-        "Gloves": 9,
-        "Goggles": 10,
-        "Helmet": 11,
-        "Mask": 12,
-        "No-Helmet": 13,
-        "No-Vest": 14,
-        "Person": 15,
-        "Safety-Boot": 16,
-        "Safety-Vest": 17,
-        "Safety_shoes": 18,
-        "Shoes": 19,
-        "Vest": 20,
-        "blue": 21,
-        "combination": 22,
-        "face_mask": 23,
-        "face_nomask": 24,
-        "glass": 25,
-        "glasses": 26,
-        "glove": 27,
-        "hand_glove": 28,
-        "hand_noglove": 29,
-        "head": 30,
-        "head_helmet": 31,
-        "head_nohelmet": 32,
-        "helmet": 33,
-        "no helmet": 34,
-        "no vest": 35,
-        "no-vest": 36,
-        "no_helmet": 37,
-        "no_vest": 38,
-        "person": 39,
-        "protective_suit": 40,
-        "red": 41,
-        "safety boot": 42,
-        "shoes": 43,
-        "vest": 44,
-        "white": 45,
-        "worker": 46,
-        "yellow": 47
-    }
+    'airplane': 0, 'apple': 1, 'backpack': 2, 'banana': 3, 'baseball bat': 4, 'baseball glove': 5, 'bear': 6, 
+    'bed': 7, 'bench': 8, 'bicycle': 9, 'bird': 10, 'boat': 11, 'book': 12, 'bottle': 13, 'bowl': 14, 'broccoli': 15, 
+    'bus': 16, 'cake': 17, 'car': 18, 'carrot': 19, 'cat': 20, 'cell phone': 21, 'chair': 22, 'clock': 23, 
+    'couch': 24, 'cow': 25, 'cup': 26, 'dining table': 27, 'dog': 28, 'donut': 29, 'elephant': 30, 
+    'fire hydrant': 31, 'fork': 32, 'frisbee': 33, 'giraffe': 34, 'handbag': 35, 'horse': 36, 'hot dog': 37, 
+    'keyboard': 38, 'kite': 39, 'knife': 40, 'laptop': 41, 'microwave': 42, 'motorcycle': 43, 'mouse': 44, 
+    'orange': 45, 'oven': 46, 'parking meter': 47, 'person': 48, 'pizza': 49, 'potted plant': 50, 
+    'refrigerator': 51, 'remote': 52, 'sandwich': 53, 'scissors': 54, 'sheep': 55, 'sink': 56, 'skateboard': 57, 
+    'skis': 58, 'snowboard': 59, 'spoon': 60, 'sports ball': 61, 'stop sign': 62, 'suitcase': 63, 'surfboard': 64, 
+    'teddy bear': 65, 'tennis racket': 66, 'tie': 67, 'toilet': 68, 'toothbrush': 69, 'traffic light': 70, 
+    'train': 71, 'truck': 72, 'tv': 73, 'umbrella': 74, 'vase': 75, 'wine glass': 76, 'zebra': 77
+}
 
     if class_name in class_mapping:
         return class_mapping[class_name]
@@ -317,55 +298,18 @@ def get_class_id(class_name):
 
 def prepare_training_data():
     class_mapping = {
-        "1": 0,
-        "2": 1,
-        "3": 2,
-        "4": 3,
-        "5": 4,
-        "6": 5,
-        "7": 6,
-        "Glass": 7,
-        "Glasses": 8,
-        "Gloves": 9,
-        "Goggles": 10,
-        "Helmet": 11,
-        "Mask": 12,
-        "No-Helmet": 13,
-        "No-Vest": 14,
-        "Person": 15,
-        "Safety-Boot": 16,
-        "Safety-Vest": 17,
-        "Safety_shoes": 18,
-        "Shoes": 19,
-        "Vest": 20,
-        "blue": 21,
-        "combination": 22,
-        "face_mask": 23,
-        "face_nomask": 24,
-        "glass": 25,
-        "glasses": 26,
-        "glove": 27,
-        "hand_glove": 28,
-        "hand_noglove": 29,
-        "head": 30,
-        "head_helmet": 31,
-        "head_nohelmet": 32,
-        "helmet": 33,
-        "no helmet": 34,
-        "no vest": 35,
-        "no-vest": 36,
-        "no_helmet": 37,
-        "no_vest": 38,
-        "person": 39,
-        "protective_suit": 40,
-        "red": 41,
-        "safety boot": 42,
-        "shoes": 43,
-        "vest": 44,
-        "white": 45,
-        "worker": 46,
-        "yellow": 47
-    }
+    'airplane': 0, 'apple': 1, 'backpack': 2, 'banana': 3, 'baseball bat': 4, 'baseball glove': 5, 'bear': 6, 
+    'bed': 7, 'bench': 8, 'bicycle': 9, 'bird': 10, 'boat': 11, 'book': 12, 'bottle': 13, 'bowl': 14, 'broccoli': 15, 
+    'bus': 16, 'cake': 17, 'car': 18, 'carrot': 19, 'cat': 20, 'cell phone': 21, 'chair': 22, 'clock': 23, 
+    'couch': 24, 'cow': 25, 'cup': 26, 'dining table': 27, 'dog': 28, 'donut': 29, 'elephant': 30, 
+    'fire hydrant': 31, 'fork': 32, 'frisbee': 33, 'giraffe': 34, 'handbag': 35, 'horse': 36, 'hot dog': 37, 
+    'keyboard': 38, 'kite': 39, 'knife': 40, 'laptop': 41, 'microwave': 42, 'motorcycle': 43, 'mouse': 44, 
+    'orange': 45, 'oven': 46, 'parking meter': 47, 'person': 48, 'pizza': 49, 'potted plant': 50, 
+    'refrigerator': 51, 'remote': 52, 'sandwich': 53, 'scissors': 54, 'sheep': 55, 'sink': 56, 'skateboard': 57, 
+    'skis': 58, 'snowboard': 59, 'spoon': 60, 'sports ball': 61, 'stop sign': 62, 'suitcase': 63, 'surfboard': 64, 
+    'teddy bear': 65, 'tennis racket': 66, 'tie': 67, 'toilet': 68, 'toothbrush': 69, 'traffic light': 70, 
+    'train': 71, 'truck': 72, 'tv': 73, 'umbrella': 74, 'vase': 75, 'wine glass': 76, 'zebra': 77
+}
 
     
     class_names = list(class_mapping.keys())  
@@ -382,17 +326,6 @@ def prepare_training_data():
 
     return yaml_file_path
 
-
-@app.route("/detect_video", methods=["POST"])
-def detect_video():
-    if "video_file" not in request.files:
-        return jsonify({"error": "No video file provided"}), 400
-
-    try:
-        video_file = request.files["video_file"]
-        return process_video(video_file)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 @app.route("/detect_webcam")
 def detect_webcam():
@@ -431,24 +364,6 @@ def gen_frames():
 
     cap.release() 
 
-def process_video(video_file):
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
-    video_file.save(temp_file.name)
-
-    cap = cv2.VideoCapture(temp_file.name)
-    frames_data = []
-
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret:
-            break
-
-        boxes, results = detect_objects_on_frame(frame)
-        frames_data.append({"boxes": boxes, "results": results})
-
-    cap.release()
-    os.remove(temp_file.name)  # Clean up the temporary file
-    return jsonify({"frames": frames_data})
 
 def detect_objects_on_frame(frame):
     results = model.predict(frame)
@@ -461,6 +376,78 @@ def detect_objects_on_frame(frame):
         class_name = result.names[class_id]
         output.append([x1, y1, x2, y2, class_name, prob])
     return output, results
+
+UPLOAD_FOLDER = 'uploads'
+PROCESSED_VIDEO_FOLDER = 'static/processed_videos'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(PROCESSED_VIDEO_FOLDER, exist_ok=True)
+
+
+@app.route("/detect_video_frames", methods=["POST"])
+def detect_video_frames():
+    if "video_file" not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    
+    video_file = request.files["video_file"]
+    if video_file.filename == "":
+        return jsonify({"error": "No selected file"}), 400
+    
+    # Save the uploaded video
+    video_path = os.path.join(UPLOAD_FOLDER, video_file.filename)
+    video_file.save(video_path)
+    
+    # Process the video
+    video = cv2.VideoCapture(video_path)
+    
+    # Store frames and detections
+    frames = []
+    all_detections = []
+    frame_count = 0
+    fps = video.get(cv2.CAP_PROP_FPS)
+    
+    while True:
+        ret, frame = video.read()
+        if not ret:
+            break
+        
+        # Process only one frame per second
+        if frame_count % int(fps) == 0:
+            # Perform object detection
+            results = model(frame)
+            
+            # Store detections for this frame
+            frame_detections = []
+            for result in results:
+                boxes = result.boxes.data.tolist()
+                for box in boxes:
+                    x1, y1, x2, y2, conf, cls = box
+                    class_name = model.names[int(cls)]
+                    frame_detections.append([x1, y1, x2, y2, class_name, conf])
+            
+            # Annotate frame with detections
+            annotated_frame = results[0].plot()
+            
+            # Convert frame to base64
+            _, buffer = cv2.imencode('.jpg', annotated_frame)
+            frame_base64 = base64.b64encode(buffer).decode('utf-8')
+            
+            frames.append(frame_base64)
+            all_detections.append(frame_detections)
+        
+        frame_count += 1
+    
+    video.release()
+    
+    return jsonify({
+        "message": "Video processed successfully.",
+        "frames": frames,
+        "detections": all_detections
+    })
+
+# Serve the processed video file
+@app.route('/static/processed_videos/<filename>')
+def serve_processed_video(filename):
+    return send_from_directory(PROCESSED_VIDEO_FOLDER, filename)
 
 if __name__ == "__main__":
     serve(app, host="0.0.0.0", port=5000)

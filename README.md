@@ -1,86 +1,65 @@
+# Object Recognition System 🔍👁️
 
----
+## Introduction 📖
+The Object Recognition System is a versatile platform designed for real-time object detection and recognition. It supports automatic annotation, customized training, and detection using images, videos, and webcams. This system can be applied in diverse fields such as security, industry automation, and more.
 
-# DetectObject Recognition System
-This project is an object recognition and detection system designed to recognize and detect objects in images, videos, or live webcam feed. The system allows for training a model with custom data, uploading and detecting objects in media files, and performing real-time detection using a webcam..
+## Features ✨
 
-## Table of Contents
-- [Features](#features)
-- [Setup](#setup)
-- [Usage](#usage)
-- [API Overview](#api-overview)
-- [License](#license)
+### 🕶️ Object Detection
+- Provides automatic annotation.
+- Allows customized training and detection through images, videos, and webcam.
 
-## Features
+## Setup Instructions ⚙️
 
-- **Image, Video, and Webcam Detection**: Detect the Object in images, videos, or live webcam feed.
-- **Custom Model Training**: Upload images and annotate for custom model training.
-- **Interactive Interface**: Simple, user-friendly HTML interface.
+### Prerequisites
+- Python 3.7 or later
+- Compatible hardware with a webcam (optional for webcam detection)
+- Required libraries (listed in `requirements.txt`)
 
-## Setup
-
-1. **Clone this Repository**:
+### Installation
+1. Clone the repository:
    ```bash
-   git clone <repository-url>
-   cd object-recognition-system
+   git clone https://github.com/Muditmishra01/Infosys-Object-Recognition-System.git
+   cd Muditmishra01/Infosys-Object-Recognition-System
    ```
-
-2. **Create Virtual Environment (Optional)**:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-   ```
-
-3. **Install Dependencies**:
+2. Install the required dependencies:
    ```bash
    pip install -r requirements.txt
    ```
+3. Download pre-trained models (if applicable) and place them in the specified directory.
 
-4. **Create `uploads` Directory**:
-   ```bash
-   mkdir uploads
-   ```
+## Usage 🚀
 
-5. **Start the Server**:
+### Running the Application
+1. Start the application by running:
    ```bash
    python app.py
    ```
+2. Access the interface via your web browser at `http://localhost:5000`.
 
-6. **Access the Application**:
-   Open `http://127.0.0.1:5000` in a web browser.
+### Detection Modes
+- **Image Mode**: Upload an image for object recognition.
+- **Video Mode**: Process a video file to detect objects frame by frame.
+- **Webcam Mode**: Use your webcam for real-time detection.
 
-## Usage
+### Annotation and Training
+- Use the **automatic annotation** feature to prepare datasets.
+- Customize training parameters and run your own detection models.
 
-### 1. Home Page
-- **Train**: Start training a custom model.
-- **Detect**: Detect PPE in uploaded images, videos, or webcam feed.
+## Contributing 🤝
 
-### 2. Training Page
-- Upload multiple images.
-- Click **Annotate Images** to mark PPE items.
-- Click **Train Model** to train on uploaded images.
+We welcome contributions! If you'd like to contribute:
+1. Fork the repository.
+2. Create a new branch (`git checkout -b feature-name`).
+3. Commit your changes (`git commit -m 'Add a new feature'`).
+4. Push to the branch (`git push origin feature-name`).
+5. Create a pull request.
 
-### 3. Detection Page
-- Choose to detect from:
-  - **Image**: Upload an image and click **Detect from Image**.
-  - **Video**: Upload a video file and click **Detect from Video**.
-  - **Webcam**: Use the webcam for real-time PPE detection.
-- **Results Table**: Shows detected PPE classes and confidence levels.
+## License 📜
 
-## API Overview
+This project is licensed under the MIT License. See the `LICENSE` file for details.
 
-| Endpoint               | Method | Description                            |
-|------------------------|--------|----------------------------------------|
-| `/train`               | GET    | Open training page                     |
-| `/detect`              | GET    | Open detection page                    |
-| `/annotate_images`     | POST   | Upload and annotate images for training|
-| `/train_model`         | POST   | Train the model                        |
-| `/detect_image`        | POST   | Detect objects in an image             |
-| `/detect_video`        | POST   | Detect objects in a video              |
-| `/detect_webcam`       | GET    | Real-time detection with webcam        |
+## Contact 📬
 
-## License
+For questions or support, feel free to reach out via [springboardmentor301@gmail.com](mailto:email@example.com).
 
-This project is licensed under the MIT License.
-
----
